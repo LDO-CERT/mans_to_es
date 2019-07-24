@@ -1,0 +1,8 @@
+mans_to_es - parses mans file and send it to elastic search
+https://github.com/LDO-CERT/mans_to_es
+
+mans_to_es is developed by (in alphabetical order):
+
+* Arcuri Davide (@dadokkio)
+* Garavaglia Andrea (@garanews)
+* LDO-CERT 
