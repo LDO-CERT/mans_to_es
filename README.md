@@ -24,10 +24,7 @@ pip install mans_to_es
 #### Usage
 
 ```
-usage: MANS to ES [-h] [--filename FILENAME] [--name NAME] [--index INDEX]
-                  [--es_host ES_HOST] [--es_port ES_PORT]
-                  [--cpu_count CPU_COUNT] [--bulk_size BULK_SIZE] [--version]
-agaravaglia@timesketch:~$ python3 /usr/local/bin/mans_to_es.py --help
+$ mans_to_es.py --help
 usage: MANS to ES [-h] [--filename FILENAME] [--name NAME] [--index INDEX]
                   [--es_host ES_HOST] [--es_port ES_PORT]
                   [--cpu_count CPU_COUNT] [--bulk_size BULK_SIZE] [--version]
