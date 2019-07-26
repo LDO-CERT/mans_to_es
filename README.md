@@ -7,7 +7,9 @@ Parses the FireEye HX .mans triage collections and send them to ElasticSearch
 ## Table of Contents
 1. [About](#about)
 2. [Getting started](#getting-started)
-3. [Disclaimer](#disclaimer)
+3. [Contributing](#contributing)
+4. [Disclaimer](#disclaimer)
+
 
 ## About 
 mans_to_es is an open source tool for parsing FireEye HX .mans triage collections and send them to ElasticSearch.
@@ -46,7 +48,14 @@ optional arguments:
 
 ```
 
+## Contributing
 
+**If you want to contribute to mans_to_es, be sure to review the [contributing guidelines](CONTRIBUTING.md). This project adheres to mans_to_es
+[code of conduct](CODE_OF_CONDUCT.md). By participating, you are expected to
+uphold this code.**
+
+**We use [GitHub issues](https://github.com/LDO-CERT/mans_to_es/issues) for
+tracking requests and bugs.
 
 ## Disclaimer
 This is not an official FireEye product. Bugs are expected. 
