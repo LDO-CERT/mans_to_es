@@ -556,7 +556,7 @@ def main():
     )
 
     parser.add_argument(
-        "--version", dest="version", action="version", version="%(prog)s 1.2"
+        "--version", dest="version", action="version", version="%(prog)s 1.3"
     )
     args = parser.parse_args()
 

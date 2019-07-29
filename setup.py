@@ -15,7 +15,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="mans_to_es",
-    version="1.2",
+    version="1.3",
     author="LDO-CERT",
     author_email="gcert@leonardocompany.com",
     description="Send .mans to ElasticSearch",
@@ -28,7 +28,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    entry_points={'console_scripts': ['mans_to_es=mans_to_es.mans_to_es:Main']},
+    entry_points={'console_scripts': ['mans_to_es=mans_to_es.mans_to_es:main']},
     install_requires=[str(req.req) for req in parse_requirements(
         'requirements.txt', session=PipSession(),
     )],
