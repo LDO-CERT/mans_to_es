@@ -265,6 +265,23 @@ def convert_date(argument, date_format="%Y-%m-%dT%H:%M:%S.%fZ"):
         return None
 
 
+def convert_timestamp(argument, date_format="%Y-%m-%dT%H:%M:%S.%fZ"):
+    """
+        convert_timestamp: parse date field and convert to timestamp
+        in:
+            argument: object to parse
+            date_format: format of the argument field
+        out:
+            parsed data
+    """
+    try:
+        d = datetime.datetime.strptime(argument, date_format)
+        timestamp = datetime.datetime.timestamp(d)
+        return int(timestamp * 1000)
+    except TypeError:
+        return None
+
+
 class MansToEs:
     def __init__(self, args):
         self.filename = args.filename
@@ -293,7 +310,9 @@ class MansToEs:
                     self.ioc_alerts.setdefault(
                         x["data"]["key"]["event_type"], []
                     ).append(x["data"]["key"]["event_id"])
-                elif x.get("data", {}).get("documents", None) or x.get("data", {}).get("analysis_details", None):
+                elif x.get("data", {}).get("documents", None) or x.get("data", {}).get(
+                    "analysis_details", None
+                ):
                     self.exd_alerts.append(
                         {
                             "source": x["source"],
@@ -302,6 +321,10 @@ class MansToEs:
                             "process name": x["data"]["process_name"],
                             "alert_code": "XPL",
                             "datetime": convert_date(
+                                x["data"]["earliest_detection_time"],
+                                date_format="%Y-%m-%dT%H:%M:%SZ",
+                            ),
+                            "timestamp": convert_timestamp(
                                 x["data"]["earliest_detection_time"],
                                 date_format="%Y-%m-%dT%H:%M:%SZ",
                             ),
@@ -348,7 +371,10 @@ class MansToEs:
 
             # If filetype is new for now it's skipped
             if filetype not in type_name.keys():
-                logging.debug("Filetype: %s not recognize. Send us a note! - SKIPPED" % type_name[filetype]["key"])
+                logging.debug(
+                    "Filetype: %s not recognize. Send us a note! - SKIPPED"
+                    % type_name[filetype]["key"]
+                )
                 continue
 
             # Ignore items if not related to timeline
@@ -363,7 +389,9 @@ class MansToEs:
 
                 logging.debug("Opening %s [%s]" % (file, type_name[filetype]["key"]))
 
-                with open(os.path.join(self.folder_path, file), "r", encoding="utf8") as f:
+                with open(
+                    os.path.join(self.folder_path, file), "r", encoding="utf8"
+                ) as f:
                     df_xml = (
                         xmltodict.parse(f.read())
                         .get("itemList", {})
@@ -375,20 +403,26 @@ class MansToEs:
                     df = pd.DataFrame(df_xml)
 
                 # check all date field, if not present remove them, if all not valid skip
-                datefields = [x for x in type_name[filetype]["datefield"] if x in df.columns]
+                datefields = [
+                    x for x in type_name[filetype]["datefield"] if x in df.columns
+                ]
                 if len(datefields) == 0:
-                    logging.debug("Filetype: %s has no valid time field - SKIPPED" % type_name[filetype]["key"])
+                    logging.debug(
+                        "Filetype: %s has no valid time field - SKIPPED"
+                        % type_name[filetype]["key"]
+                    )
                     continue
 
                 # if not valid date field drop them
-                df = df.dropna(
-                    axis=0, how="all", subset=datefields
-                )
+                df = df.dropna(axis=0, how="all", subset=datefields)
 
                 # stateagentinspector have in eventType the main subtype and in timestamp usually the relative time
                 if filetype == "stateagentinspector":
                     df = df.rename(columns={"eventType": "message"})
                     df["datetime"] = df[datefields]
+                    df["timestamp"] = convert_timestamp(
+                        df[datefields], date_format="%Y-%m-%dT%H:%M:%S+00:00"
+                    )
                 else:
                     df["message"] = filetype
                     # convert all export date fields to default format
@@ -421,16 +455,13 @@ class MansToEs:
                     # explode if multiple date
                     list_dd = []
                     df_dd = pd.DataFrame()
-                    df_tmp = df[
-                        [
-                            x
-                            for x in df.columns
-                            if x not in datefields
-                        ]
-                    ]
+                    df_tmp = df[[x for x in df.columns if x not in datefields]]
                     for index, x in enumerate(datefields):
                         df_tmp2 = df_tmp.copy()
                         df_tmp2["datetime"] = df[[x]]
+                        df_tmp2["timestamp"] = convert_timestamp(
+                            df[[x]], date_format="%Y-%m-%dT%H:%M:%S+00:00"
+                        )
                         if type_name[filetype].get("message_fields", None):
                             for mf in type_name[filetype]["message_fields"][index]:
                                 df_tmp2["message"] += " - " + df_tmp2[mf]
