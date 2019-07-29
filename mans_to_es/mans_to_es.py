@@ -41,25 +41,25 @@ type_name = {
         ],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
     },
-    "processes-api": {  ## OK
+    "processes-api": {
         "key": "ProcessItem",
         "datefield": ["startTime"],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
         "message_fields": [["name"]],
     },
-    "processes-memory": {  ## OK
+    "processes-memory": {
         "key": "ProcessItem",
         "datefield": ["startTime"],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
         "message_fields": [["name"]],
     },
-    "urlhistory": {  ## OK
+    "urlhistory": {
         "key": "UrlHistoryItem",
         "datefield": ["LastVisitDate"],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
         "message_fields": [["URL"]],
     },
-    "stateagentinspector": {  ## OK
+    "stateagentinspector": {
         "key": "eventItem",
         "datefield": ["timestamp"],
         "dateformat": "%Y-%m-%dT%H:%M:%S.%fZ",
@@ -201,13 +201,13 @@ type_name = {
             },
         },
     },
-    "prefetch": {  ## OK
+    "prefetch": {
         "key": "PrefetchItem",
         "datefield": ["LastRun", "Created"],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
         "message_fields": [["ApplicationFileName"], ["ApplicationFileName"]],
     },
-    "filedownloadhistory": {  ## OK
+    "filedownloadhistory": {
         "key": "FileDownloadHistoryItem",
         "datefield": ["LastModifiedDate", "LastAccessedDate", "StartDate", "EndDate"],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
@@ -227,7 +227,7 @@ type_name = {
 }
 
 
-def output_dict(details, itemtype):
+def output_dict(details):
     """
         Output_dict: details column in stateagentinspector df contains all the row info
         In:
@@ -415,9 +415,7 @@ class MansToEs:
                 # stateagentinspector have in eventType the main subtype and in timestamp usually the relative time
                 if filetype == "stateagentinspector":
                     df = df.rename(columns={"eventType": "message"})
-                    df["datetime"] = df["timestamp"].apply(
-                        lambda x: convert_date(x)
-                    )
+                    df["datetime"] = df["timestamp"].apply(lambda x: convert_date(x))
                     df["timestamp"] = df["datetime"].apply(
                         lambda x: convert_timestamp(
                             x, date_format="%Y-%m-%dT%H:%M:%S+00:00"
@@ -430,11 +428,7 @@ class MansToEs:
                         df[datefield] = df[datefield].apply(
                             lambda x: convert_date(x, type_name[filetype]["dateformat"])
                         )
-                df = df.drop(
-                    ["@created", "@sequence_num"],
-                    axis=1,
-                    errors="ignore",
-                )
+                df = df.drop(["@created", "@sequence_num"], axis=1, errors="ignore")
                 logging.debug("\tPreprocessing done")
 
                 # stateagentinspector is big and converted in parallel
@@ -490,7 +484,7 @@ class MansToEs:
             [
                 edf,
                 edf.apply(
-                    lambda row: output_dict(row.details, itemtype),
+                    lambda row: output_dict(row.details),
                     axis=1,
                     result_type="expand",
                 ),
@@ -534,7 +528,7 @@ class MansToEs:
         helpers.bulk(es, data, index=self.index, doc_type="generic_event")
 
 
-def Main():
+def main():
     parser = argparse.ArgumentParser(
         description="Push .mans information in Elasticsearch index", prog="MANS to ES"
     )
@@ -562,7 +556,7 @@ def Main():
     )
 
     parser.add_argument(
-        "--version", dest="version", action="version", version="%(prog)s 1.0"
+        "--version", dest="version", action="version", version="%(prog)s 1.2"
     )
     args = parser.parse_args()
 
@@ -582,7 +576,7 @@ def Main():
 
 
 if __name__ == "__main__":
-    if not Main():
+    if not main():
         sys.exit(1)
     else:
         sys.exit(0)
