@@ -419,9 +419,13 @@ class MansToEs:
                 # stateagentinspector have in eventType the main subtype and in timestamp usually the relative time
                 if filetype == "stateagentinspector":
                     df = df.rename(columns={"eventType": "message"})
-                    df["datetime"] = df[datefields]
-                    df["timestamp"] = convert_timestamp(
-                        df[datefields], date_format="%Y-%m-%dT%H:%M:%S+00:00"
+                    df["datetime"] = df["timestamp"].apply(
+                        lambda x: convert_date(x)
+                    )
+                    df["timestamp"] = df["datetime"].apply(
+                        lambda x: convert_timestamp(
+                            x, date_format="%Y-%m-%dT%H:%M:%S+00:00"
+                        )
                     )
                 else:
                     df["message"] = filetype
@@ -445,7 +449,7 @@ class MansToEs:
                         tmp_df = df[df.message == itemtype].reset_index()
                         for i in range(0, len(tmp_df), self.bulk_size):
                             pieces.append(
-                                (tmp_df.loc[i : i + self.bulk_size - 1, :], itemtype)
+                                (tmp_df.loc[i: i + self.bulk_size - 1, :], itemtype)
                             )
                     with Pool(processes=self.cpu_count) as pool:
                         pool.starmap_async(
@@ -459,8 +463,10 @@ class MansToEs:
                     for index, x in enumerate(datefields):
                         df_tmp2 = df_tmp.copy()
                         df_tmp2["datetime"] = df[[x]]
-                        df_tmp2["timestamp"] = convert_timestamp(
-                            df[[x]], date_format="%Y-%m-%dT%H:%M:%S+00:00"
+                        df_tmp2["timestamp"] = df_tmp2["datetime"].apply(
+                            lambda x: convert_timestamp(
+                                x, date_format="%Y-%m-%dT%H:%M:%S+00:00"
+                            )
                         )
                         if type_name[filetype].get("message_fields", None):
                             for mf in type_name[filetype]["message_fields"][index]:
