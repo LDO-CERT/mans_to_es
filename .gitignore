@@ -4,6 +4,9 @@
 *~
 *.swp
 
+# PyCharm folder
+/.idea/
+
 # Generic auto-generated build files
 *.pyc
 *.pyo

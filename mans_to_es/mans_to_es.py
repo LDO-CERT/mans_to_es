@@ -41,6 +41,12 @@ type_name = {
         ],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
     },
+    "processes-api": {  ## OK
+        "key": "ProcessItem",
+        "datefield": ["startTime"],
+        "dateformat": "%Y-%m-%dT%H:%M:%SZ",
+        "message_fields": [["name"]],
+    },
     "processes-memory": {  ## OK
         "key": "ProcessItem",
         "datefield": ["startTime"],
@@ -203,9 +209,9 @@ type_name = {
     },
     "filedownloadhistory": {  ## OK
         "key": "FileDownloadHistoryItem",
-        "datefield": ["LastModifiedDate"],
+        "datefield": ["LastModifiedDate", "LastAccessedDate", "StartDate", "EndDate"],
         "dateformat": "%Y-%m-%dT%H:%M:%SZ",
-        "message_fields": [["SourceURL"]],
+        "message_fields": [["SourceURL"], ["SourceURL"], ["SourceURL"], ["SourceURL"]],
     },
     "tasks": {"key": "TaskItem", "skip": True},
     "ports": {"key": "PortItem", "skip": True},
@@ -287,7 +293,7 @@ class MansToEs:
                     self.ioc_alerts.setdefault(
                         x["data"]["key"]["event_type"], []
                     ).append(x["data"]["key"]["event_id"])
-                elif x.get("data", {}).get("documents", None):
+                elif x.get("data", {}).get("documents", None) or x.get("data", {}).get("analysis_details", None):
                     self.exd_alerts.append(
                         {
                             "source": x["source"],
@@ -300,8 +306,8 @@ class MansToEs:
                                 date_format="%Y-%m-%dT%H:%M:%SZ",
                             ),
                             "ALERT": True,
-                            "message": "PID: %d PROCESS: %s"
-                            % (x["data"]["process_id"], x["data"]["process_name"]),
+                            "message": "PID: %s PROCESS: %s"
+                            % (str(x["data"]["process_id"]), x["data"]["process_name"]),
                         }
                     )
         if len(self.exd_alerts) > 0:
@@ -340,6 +346,11 @@ class MansToEs:
         """
         for filetype in self.filelist.keys():
 
+            # If filetype is new for now it's skipped
+            if filetype not in type_name.keys():
+                logging.debug("Filetype: %s not recognize. Send us a note! - SKIPPED" % type_name[filetype]["key"])
+                continue
+
             # Ignore items if not related to timeline
             # TODO: will use them in neo4j for relationship
             if type_name[filetype].get("skip", False):
@@ -350,32 +361,38 @@ class MansToEs:
             # Read all files related to the type
             for file in self.filelist[filetype]:
 
-                # logging.debug("Opening %s [%s]" % (file, filetype))
+                logging.debug("Opening %s [%s]" % (file, type_name[filetype]["key"]))
 
-                with open(os.path.join(self.folder_path, file), "r") as f:
+                with open(os.path.join(self.folder_path, file), "r", encoding="utf8") as f:
                     df_xml = (
                         xmltodict.parse(f.read())
                         .get("itemList", {})
                         .get(type_name[filetype]["key"], {})
                     )
                     if df_xml == {}:
-                        logging.debug("\tEmpty file")
+                        logging.debug("\tEmpty file - SKIPPED")
                         continue
                     df = pd.DataFrame(df_xml)
 
+                # check all date field, if not present remove them, if all not valid skip
+                datefields = [x for x in type_name[filetype]["datefield"] if x in df.columns]
+                if len(datefields) == 0:
+                    logging.debug("Filetype: %s has no valid time field - SKIPPED" % type_name[filetype]["key"])
+                    continue
+
                 # if not valid date field drop them
                 df = df.dropna(
-                    axis=0, how="all", subset=type_name[filetype]["datefield"]
+                    axis=0, how="all", subset=datefields
                 )
 
                 # stateagentinspector have in eventType the main subtype and in timestamp usually the relative time
                 if filetype == "stateagentinspector":
                     df = df.rename(columns={"eventType": "message"})
-                    df["datetime"] = df[type_name[filetype]["datefield"]]
+                    df["datetime"] = df[datefields]
                 else:
                     df["message"] = filetype
                     # convert all export date fields to default format
-                    for datefield in type_name[filetype]["datefield"]:
+                    for datefield in datefields:
                         df[datefield] = df[datefield].apply(
                             lambda x: convert_date(x, type_name[filetype]["dateformat"])
                         )
@@ -408,10 +425,10 @@ class MansToEs:
                         [
                             x
                             for x in df.columns
-                            if x not in type_name[filetype]["datefield"]
+                            if x not in datefields
                         ]
                     ]
-                    for index, x in enumerate(type_name[filetype]["datefield"]):
+                    for index, x in enumerate(datefields):
                         df_tmp2 = df_tmp.copy()
                         df_tmp2["datetime"] = df[[x]]
                         if type_name[filetype].get("message_fields", None):
@@ -434,6 +451,8 @@ class MansToEs:
                 edf: piece of stateagentinspector file
                 itemtype: subtype of processes piece
         """
+        subtype = type_name["stateagentinspector"]["subtypes"]
+
         end = pd.concat(
             [
                 edf,
@@ -452,9 +471,7 @@ class MansToEs:
                     "source": "IOC",
                     "resolution": "ALERT",
                     "ALERT": True,
-                    "alert_code": type_name["stateagentinspector"]["subtypes"][
-                        itemtype
-                    ].get("hits_key", None),
+                    "alert_code": subtype[itemtype].get("hits_key", None),
                 }
             )
             if itemtype in self.ioc_alerts.keys()
@@ -465,12 +482,8 @@ class MansToEs:
         )
 
         end = end.drop(["details"], axis=1, errors="ignore")
-        if type_name["stateagentinspector"]["subtypes"][itemtype].get(
-            "message_fields", None
-        ):
-            for mf in type_name["stateagentinspector"]["subtypes"][itemtype][
-                "message_fields"
-            ]:
+        if subtype[itemtype].get("message_fields", None):
+            for mf in subtype[itemtype]["message_fields"]:
                 end["message"] += " - " + end[mf]
         end["timestamp_desc"] = end["message"]
         self.to_elastic(end)
