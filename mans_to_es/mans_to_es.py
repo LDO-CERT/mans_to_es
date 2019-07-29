@@ -274,12 +274,8 @@ def convert_timestamp(argument, date_format="%Y-%m-%dT%H:%M:%S.%fZ"):
         out:
             parsed data
     """
-    try:
-        d = datetime.datetime.strptime(argument, date_format)
-        timestamp = datetime.datetime.timestamp(d)
-        return int(timestamp * 1000)
-    except TypeError:
-        return None
+    d = datetime.datetime.strptime(argument, date_format)
+    return str(int(d.timestamp() * 1000000))
 
 
 class MansToEs:
@@ -435,7 +431,7 @@ class MansToEs:
                             lambda x: convert_date(x, type_name[filetype]["dateformat"])
                         )
                 df = df.drop(
-                    ["@created", "@sequence_num", "timestamp"],  # "@uid",
+                    ["@created", "@sequence_num"],
                     axis=1,
                     errors="ignore",
                 )
@@ -463,6 +459,7 @@ class MansToEs:
                     for index, x in enumerate(datefields):
                         df_tmp2 = df_tmp.copy()
                         df_tmp2["datetime"] = df[[x]]
+                        df_tmp2 = df_tmp2[df_tmp2["datetime"].notnull()]
                         df_tmp2["timestamp"] = df_tmp2["datetime"].apply(
                             lambda x: convert_timestamp(
                                 x, date_format="%Y-%m-%dT%H:%M:%S+00:00"
@@ -472,7 +469,6 @@ class MansToEs:
                             for mf in type_name[filetype]["message_fields"][index]:
                                 df_tmp2["message"] += " - " + df_tmp2[mf]
                         df_tmp2["message"] += " [%s]" % x
-                        df_tmp2 = df_tmp2[df_tmp2["datetime"].notnull()]
                         list_dd.append(df_tmp2)
                     df_dd = pd.concat(list_dd, sort=False)
 
