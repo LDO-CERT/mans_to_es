@@ -23,6 +23,10 @@ It uses pandas and multiprocessing to speed up the parsing with xml files.
 pip install mans-to-es
 ```
 
+#### Developing
+
+If you want to develop with the script you can download and place it under /usr/local/bin and make it executable.
+
 #### Usage
 
 ```
