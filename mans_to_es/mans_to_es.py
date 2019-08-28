@@ -291,6 +291,10 @@ class MansToEs:
         self.ioc_alerts = {}
         self.exd_alerts = []
 
+        es = Elasticsearch([self.es_info])
+        if not es.ping():
+            raise ValueError("Connection failed")
+        
         logging.debug(
             "Start parsing %s. Push on %s index and %s timeline"
             % (args.filename, args.name, args.index)
