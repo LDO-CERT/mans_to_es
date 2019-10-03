@@ -11,7 +11,7 @@ Parses the FireEye HX .mans triage collections and send them to ElasticSearch
 4. [Disclaimer](#disclaimer)
 
 
-## About 
+## About
 mans_to_es is an open source tool for parsing FireEye HX .mans triage collections and send them to ElasticSearch.
 
 Mans file is a zipped collection of xml that we parse using [xmltodict](https://github.com/martinblech/xmltodict).
@@ -20,8 +20,12 @@ It uses pandas and multiprocessing to speed up the parsing with xml files.
 ## Getting started
 #### Installation
 ```
-pip install man-to-es
+pip install mans-to-es
 ```
+
+#### Developing
+
+If you want to develop with the script you can download and place it under /usr/local/bin and make it executable.
 
 #### Usage
 
