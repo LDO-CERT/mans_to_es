@@ -15,7 +15,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="mans_to_es",
-    version="1.3",
+    version="1.4",
     author="LDO-CERT",
     author_email="gcert@leonardocompany.com",
     description="Send .mans to ElasticSearch",

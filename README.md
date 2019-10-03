@@ -20,7 +20,7 @@ It uses pandas and multiprocessing to speed up the parsing with xml files.
 ## Getting started
 #### Installation
 ```
-pip install mans_to_es
+pip install man-to-es
 ```
 
 #### Usage
