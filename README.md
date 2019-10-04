@@ -1,6 +1,7 @@
 # mans_to_es
 [![Version](https://img.shields.io/pypi/v/mans_to_es.svg)](https://pypi.python.org/pypi/mans_to_es)
 [![GitHub license](https://img.shields.io/github/license/ldo-cert/mans_to_es.svg)](https://github.com/LDO-CERT/mans_to_es)
+[![HitCount](http://hits.dwyl.com/LDO-CERT/mans_to_es.svg)](http://hits.dwyl.com/LDO-CERT/mans_to_es)
 
 Parses the FireEye HX .mans triage collections and send them to ElasticSearch
 
