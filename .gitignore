@@ -4,8 +4,14 @@
 *~
 *.swp
 
+# MyPy
+.mypy_cache/
+
 # PyCharm folder
 /.idea/
+
+# Log file
+mans_to_es.log
 
 # Generic auto-generated build files
 *.pyc

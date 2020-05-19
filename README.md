@@ -28,7 +28,7 @@ pip install mans-to-es
 
 If you want to develop with the script you can download and place it under /usr/local/bin and make it executable.
 
-#### Usage
+#### Usage as script
 
 ```
 $ mans_to_es.py --help
@@ -51,6 +51,14 @@ optional arguments:
                         Bulk size for multiprocessing parsing and upload
   --version             show program's version number and exit
 
+```
+
+#### Usage as lib
+
+```
+>>> from mans_to_es import MansToEs
+>>> a = MansToEs(filename = '<file.mans>', index="<index>", name="<name>", es_host="localhost", es_port=9200)
+>>> a.run()
 ```
 
 ## Contributing
