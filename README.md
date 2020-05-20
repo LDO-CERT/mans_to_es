@@ -57,6 +57,10 @@ optional arguments:
 
 ```
 >>> from mans_to_es import MansToEs
+>>> a = MansToEs()
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: __init__() missing 5 required positional arguments: 'filename', 'index', 'name', 'es_host', and 'es_port'
 >>> a = MansToEs(filename = '<file.mans>', index="<index>", name="<name>", es_host="localhost", es_port=9200)
 >>> a.run()
 ```

@@ -1,10 +1,14 @@
 # Changelog
 
+## [1.6] 2020-05-20
+- Use biliard to avoid "daemonic processes are not allowed to have children" in celery
+- Restore doc_type="generic_event" used by timesketch even if it'll be deprecated in elastic 8
+
 ## [1.5] 2020-05-19
 - Little refactoring to improve usage as imported library
 - Add threat info to alerts if present
-- Aligned dependencies to Timesketch requirements
-- Added support for pip > 20 build
+- Updated dependencies
+- Added support for pip > 10 build
 
 ## [1.4] 2019-10-03
 - Support for extracting multiple field as comment

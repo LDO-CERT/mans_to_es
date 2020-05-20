@@ -8,3 +8,4 @@ six==1.12.0
 urllib3==1.25.9
 xmltodict==0.12.0
 ciso8601>=2.1.1
+billiard==3.6.3.0

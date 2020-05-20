@@ -14,7 +14,7 @@ import ciso8601
 import xmltodict  # type: ignore
 import pandas as pd  # type: ignore
 
-from multiprocessing import Pool, cpu_count
+from billiard import Pool, cpu_count
 
 import elasticsearch  # type: ignore
 from elasticsearch import helpers, Elasticsearch
@@ -411,7 +411,7 @@ class MansToEs:
             if len(self.exd_alerts) > 0:
                 es = Elasticsearch([self.es_info])
                 helpers.bulk(
-                    es, self.exd_alerts, index=self.index,  # doc_type="generic_event"
+                    es, self.exd_alerts, index=self.index, doc_type="generic_event"
                 )
             logging.debug(
                 "[MAIN] Parsing Hits.json - %d alerts found [✔]"
@@ -576,7 +576,7 @@ class MansToEs:
                 es,
                 elk_items,
                 index=self.index,
-                # doc_type="generic_event",
+                doc_type="generic_event",
                 chunk_size=self.bulk_size,
                 request_timeout=60,
             ),
