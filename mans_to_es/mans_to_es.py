@@ -588,18 +588,12 @@ class MansToEs:
         """
             Main process
         """
-        try:     
-            self.extract_mans()
-            self.parse_manifest()
-            self.parse_hits()
-            self.process()
-            self.to_elastic()
-            self.delete_temp_folder()
-            logging.debug("[MAIN] Operation Completed [✔✔✔]")
-            return True
-        except:
-            logging.exception("Error parsing .mans")
-            return False               
+        self.extract_mans()
+        self.parse_manifest()
+        self.parse_hits()
+        self.process()
+        self.to_elastic()
+        self.delete_temp_folder()
 
 
 def main():
@@ -630,24 +624,28 @@ def main():
     )
 
     parser.add_argument(
-        "--version", dest="version", action="version", version="%(prog)s 1.5"
+        "--version", dest="version", action="version", version="%(prog)s 1.7"
     )
     args = parser.parse_args()
 
     if not all([args.name, args.index, args.es_port, args.es_host]):
         parser.print_usage()
     else:
-        mte = MansToEs(
-            args.filename,
-            args.index,
-            args.name,
-            args.es_host,
-            args.es_port,
-            args.bulk_size,
-            args.cpu_count,
-        )
-        result = mte.run()
-        return result
+        try:
+            mte = MansToEs(
+                args.filename,
+                args.index,
+                args.name,
+                args.es_host,
+                args.es_port,
+                args.bulk_size,
+                args.cpu_count,
+            )
+            mte.run()
+            logging.debug("[MAIN] Operation Completed [✔✔✔]")
+        except:
+            logging.exception("Error parsing .mans")
+            return False
     return True
 
 
