@@ -1,0 +1,5 @@
+include AUTHORS CHANGELOG.md LICENSE README.md
+exclude .gitignore
+exclude *.pyc
+recursive-exclude mans_to_es *.pyc
+include requirements.txt
