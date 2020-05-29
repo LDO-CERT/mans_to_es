@@ -24,3 +24,6 @@ mans_to_es.log
 /dependencies/
 /dist/
 /mans_to_es.egg-info
+
+# Editor data
+.vscode/

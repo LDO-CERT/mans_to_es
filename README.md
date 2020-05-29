@@ -31,37 +31,66 @@ If you want to develop with the script you can download and place it under /usr/
 #### Usage as script
 
 ```
-$ mans_to_es.py --help
-usage: MANS to ES [-h] [--filename FILENAME] [--name NAME] [--index INDEX]
-                  [--es_host ES_HOST] [--es_port ES_PORT]
-                  [--cpu_count CPU_COUNT] [--bulk_size BULK_SIZE] [--version]
+>>> mans_to_es.py --help
+usage: MANS to ES [-h] --filename FILENAME [--cpu_count CPU_COUNT] [--bulk_size BULK_SIZE] [--version] {elastic,timesketch} ...
 
-Push .mans information in Elasticsearch index
+Push .mans information in ElasticSearch index
+
+positional arguments:
+  {elastic,timesketch}
+    elastic             Save data in elastic
+    timesketch          Save data in TimeSketch
 
 optional arguments:
   -h, --help            show this help message and exit
   --filename FILENAME   Path of the .mans file
-  --name NAME           Timeline name
-  --index INDEX         ES index name
-  --es_host ES_HOST     ES host
-  --es_port ES_PORT     ES port
   --cpu_count CPU_COUNT
                         cpu count
   --bulk_size BULK_SIZE
                         Bulk size for multiprocessing parsing and upload
   --version             show program's version number and exit
 
+
+>>> mans_to_es.py timesketch --help
+usage: MANS to ES timesketch [-h] [--sketch_id SKETCH_ID] [--sketch_name SKETCH_NAME] [--sketch_description SKETCH_DESCRIPTION] [--timeline_name TIMELINE_NAME]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --sketch_id SKETCH_ID
+                        TimeSketch Sketch id
+  --sketch_name SKETCH_NAME
+                        TimeSketch Sketch name
+  --sketch_description SKETCH_DESCRIPTION
+                        TimeSketch Sketch description
+  --timeline_name TIMELINE_NAME
+                        TimeSketch Timeline Name
+
+
+>>> mans_to_es.py elastic --help
+usage: MANS to ES elastic [-h] [--index INDEX] [--es_host ES_HOST] [--es_port ES_PORT]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --index INDEX      ElasticSearch Index name
+  --es_host ES_HOST  ElasticSearch host
+  --es_port ES_PORT  ElasticSearch port
 ```
 
 #### Usage as lib
 
 ```
 >>> from mans_to_es import MansToEs
->>> a = MansToEs()
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-TypeError: __init__() missing 5 required positional arguments: 'filename', 'index', 'name', 'es_host', and 'es_port'
->>> a = MansToEs(filename = '<file.mans>', index="<index>", name="<name>", es_host="localhost", es_port=9200)
+>>>
+>>> # PUSHING TO ELASTIC
+>>> a = MansToEs(mode = 'elastic', filename = '<file.mans>', index="<index>", es_host="localhost", es_port=9200)
+>>> a.run()
+>>>
+>>> # PUSHING TO EXISTING TIMESKETCH INDEX
+>>> a = MansToEs(mode = 'timesketch', filename = '<file.mans>', sketch_id=<sketch_id>, timeline_name='<timeline_name>')
+>>> a.run()
+>>>
+>>> # PUSHING TO A NEW TIMESKETCH INDEX
+>>> a = MansToEs(mode = 'timesketch', filename = '<file.mans>', sketch_name='<sketch_name>', timeline_name='<timeline_name>')
 >>> a.run()
 ```
 
