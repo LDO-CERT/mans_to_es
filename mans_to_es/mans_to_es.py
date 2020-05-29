@@ -3,25 +3,27 @@ import os, sys
 import argparse
 import collections
 import json
+import time
 import logging
 
 import zipfile
 import shutil
 
 import datetime
-import ciso8601
-
+import ciso8601  # type: ignore
+import elasticsearch  # type: ignore
 import xmltodict  # type: ignore
 import pandas as pd  # type: ignore
 
-from billiard import Pool, cpu_count
-
-import elasticsearch  # type: ignore
-from elasticsearch import helpers, Elasticsearch
-
-from typing import Tuple, Union, BinaryIO, TextIO, Dict, List, Mapping, Any
-
 from glob import glob
+from billiard import Pool, cpu_count  # type: ignore
+from elasticsearch import helpers, Elasticsearch  # type: ignore
+from typing import Tuple, Union, BinaryIO, TextIO, Dict, List, Mapping, Any
+from timesketch_api_client import config  # type: ignore
+from timesketch_import_client import importer  # type: ignore
+
+# from timesketch_import_client import helper  # type: ignore
+
 
 # hide ES log
 es_logger = logging.getLogger("elasticsearch")
@@ -218,17 +220,23 @@ def convert_skew(offset: str) -> int:
 class MansToEs:
     def __init__(
         self,
+        mode: str,
         filename: str,
-        index: str,
-        name: str,
-        es_host: str,
-        es_port: int,
+        index: str = None,
+        sketch_id: int = None,
+        sketch_name: str = None,
+        sketch_description: str = None,
+        timeline_name: str = None,
+        es_host: str = None,
+        es_port: int = None,
         bulk_size: int = 1000,
         cpu_count: int = cpu_count() - 1,
     ):
+        self.mode = mode
         self.filename = filename
         self.index = index
-        self.name = name
+        self.sketch = None
+        self.timeline_name = timeline_name
         self.bulk_size = bulk_size
         self.cpu_count = cpu_count
         self.folder_path = self.filename + "__tmp"
@@ -239,12 +247,20 @@ class MansToEs:
         self.exd_alerts: List[Mapping[str, str]] = []
         self.generic_items: Dict[str, Any] = {}
 
-        es = Elasticsearch([self.es_info])
-        if not es.ping():
-            raise ValueError("Connection failed")
+        # initial check, es is up or timesketch conf are ok
+        if self.mode == "elastic":
+            es = Elasticsearch([self.es_info])
+            if not es.ping():
+                raise ValueError("Connection failed")
+        elif self.mode == "timesketch":
+            ts = config.get_client()
 
-        logging.debug(f"[MAIN] Start parsing {self.filename}.")
-        logging.debug(f"[MAIN] Pushing on {self.name} index and {self.index} timeline")
+            if sketch_id:
+                self.sketch = ts.get_sketch(int(sketch_id))
+            elif sketch_name:
+                self.sketch = ts.create_sketch(sketch_name, sketch_description)
+
+        logging.debug(f"[MAIN] Start parsing {self.filename} [{self.mode}].")
 
     def handle_stateagentinspector(self, path, item_detail) -> bool:
         """
@@ -341,7 +357,7 @@ class MansToEs:
 
     def parse_manifest(self):
         """
-            Obtains filenames from manifest.json file in extracted foldere
+            Obtains filenames from manifest.json file in extracted folder
         """
         with open(os.path.join(self.folder_path, "manifest.json"), "r") as f:
             data = json.load(f)
@@ -407,16 +423,6 @@ class MansToEs:
                                 ),
                             }
                         )
-
-            if len(self.exd_alerts) > 0:
-                es = Elasticsearch([self.es_info])
-                helpers.bulk(
-                    es, self.exd_alerts, index=self.index, doc_type="generic_event"
-                )
-            logging.debug(
-                "[MAIN] Parsing Hits.json - %d alerts found [✔]"
-                % (len(self.exd_alerts) + len(self.ioc_alerts))
-            )
 
     def process(self):
         """
@@ -560,17 +566,24 @@ class MansToEs:
                 orient="records",
                 lines=True,
             )
+
         del df
 
     def to_elastic(self):
         """
             to_elastic: push dataframe to elastic index
         """
+        es = Elasticsearch([self.es_info])
+
+        if len(self.exd_alerts) > 0:
+            helpers.bulk(
+                es, self.exd_alerts, index=self.index, doc_type="generic_event"
+            )
+
         elk_items = []
         for file in glob(self.folder_path + "/tmp__*.json"):
             elk_items += open(file, "r").readlines()
         logging.debug(f"[MAIN] Pushing {len(elk_items)} items to elastic")
-        es = Elasticsearch([self.es_info])
         collections.deque(
             helpers.parallel_bulk(
                 es,
@@ -584,28 +597,87 @@ class MansToEs:
         )
         logging.debug("[MAIN] Parallel elastic push [✔]")
 
+    def to_timesketch(self):
+        """
+            to_timesketch: push dataframe to timesketch
+        """
+        # TODO: find a mans with edx to test!
+        if self.exd_alerts:
+            with importer.ImportStreamer() as streamer:
+                streamer.set_sketch(self.sketch)
+                # streamer.set_config_helper(import_helper)
+                streamer.set_timeline_name(self.timeline_name)
+                for alert in self.exd_alerts:
+                    streamer.add_dict(alert)
+
+        with importer.ImportStreamer() as streamer:
+            streamer.set_sketch(self.sketch)
+            # streamer.set_config_helper(import_helper)
+            streamer.set_timeline_name(self.timeline_name)
+            for file in glob(self.folder_path + "/tmp__*.json"):
+                df = pd.read_json(file, orient="records", lines=True,)
+                streamer.add_data_frame(df)
+        logging.debug("[MAIN] Bulk timesketch push [✔]")
+
     def run(self):
         """
             Main process
         """
-        self.extract_mans()
-        self.parse_manifest()
-        self.parse_hits()
-        self.process()
-        self.to_elastic()
-        self.delete_temp_folder()
+        try:
+            self.extract_mans()
+            self.parse_manifest()
+            self.parse_hits()
+            self.process()
+            if self.mode == "elastic":
+                self.to_elastic()
+            elif self.mode == "timesketch":
+                self.to_timesketch()
+            self.delete_temp_folder()
+            logging.debug("[MAIN] Operation Completed [✔✔✔]")
+        except:
+            logging.exception("Error parsing .mans")
+            return False
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Push .mans information in Elasticsearch index", prog="MANS to ES"
+        description="Push .mans information in ElasticSearch index", prog="MANS to ES"
     )
     # Required parameters
-    parser.add_argument("--filename", dest="filename", help="Path of the .mans file")
-    parser.add_argument("--name", dest="name", help="Timeline name")
-    parser.add_argument("--index", dest="index", help="ES index name")
-    parser.add_argument("--es_host", dest="es_host", help="ES host")
-    parser.add_argument("--es_port", dest="es_port", help="ES port")
+    parser.add_argument(
+        "--filename", dest="filename", required=True, help="Path of the .mans file"
+    )
+
+    # TimeSketch parameters
+    timesketch = argparse.ArgumentParser(add_help=False)
+    timesketch.add_argument(
+        "--sketch_id", dest="sketch_id", help="TimeSketch Sketch id"
+    )
+    timesketch.add_argument(
+        "--sketch_name", dest="sketch_name", help="TimeSketch Sketch name"
+    )
+    timesketch.add_argument(
+        "--sketch_description",
+        dest="sketch_description",
+        help="TimeSketch Sketch description",
+    )
+    timesketch.add_argument(
+        "--timeline_name", dest="timeline_name", help="TimeSketch Timeline Name"
+    )
+
+    # Elastic parameters
+    elastic = argparse.ArgumentParser(add_help=False)
+    elastic.add_argument("--index", dest="index", help="ElasticSearch Index name")
+    elastic.add_argument("--es_host", dest="es_host", help="ElasticSearch host")
+    elastic.add_argument("--es_port", dest="es_port", help="ElasticSearch port")
+
+    sp = parser.add_subparsers(required=True, dest="mode")
+    sp_elastic = sp.add_parser(
+        "elastic", parents=[elastic], help="Save data in elastic"
+    )
+    sp_timesketch = sp.add_parser(
+        "timesketch", parents=[timesketch], help="Save data in TimeSketch"
+    )
 
     # Optional parameters to increase performances
     parser.add_argument(
@@ -624,29 +696,47 @@ def main():
     )
 
     parser.add_argument(
-        "--version", dest="version", action="version", version="%(prog)s 1.5"
+        "--version", dest="version", action="version", version="%(prog)s 1.7"
     )
     args = parser.parse_args()
 
-    if not all([args.name, args.index, args.es_port, args.es_host]):
-        parser.print_usage()
-    else:
-        try:
+    if args.mode == "elastic":
+        if not all([args.index, args.es_port, args.es_host]):
+            sp_elastic.print_help()
+            return False
+        else:
             mte = MansToEs(
-                args.filename,
-                args.index,
-                args.name,
-                args.es_host,
-                args.es_port,
-                args.bulk_size,
-                args.cpu_count,
+                mode=args.mode,
+                filename=args.filename,
+                index=args.index,
+                es_host=args.es_host,
+                es_port=args.es_port,
+                bulk_size=args.bulk_size,
+                cpu_count=args.cpu_count,
             )
             mte.run()
-            logging.debug("[MAIN] Operation Completed [✔✔✔]")
-        except:
-            logging.exception("Error parsing .mans")
+            return True
+    elif args.mode == "timesketch":
+        if (
+            not any([args.sketch_id, args.sketch_name, args.sketch_description])
+            or all([args.sketch_id, args.sketch_name, args.sketch_description])
+            or not args.timeline_name
+        ):
+            sp_timesketch.print_help()
             return False
-    return True
+        else:
+            mte = MansToEs(
+                mode=args.mode,
+                filename=args.filename,
+                sketch_id=args.sketch_id,
+                sketch_name=args.sketch_name,
+                sketch_description=args.sketch_description,
+                timeline_name=args.timeline_name,
+                bulk_size=args.bulk_size,
+                cpu_count=args.cpu_count,
+            )
+            mte.run()
+            return True
 
 
 if __name__ == "__main__":
