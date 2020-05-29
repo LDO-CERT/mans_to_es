@@ -21,8 +21,7 @@ from elasticsearch import helpers, Elasticsearch  # type: ignore
 from typing import Tuple, Union, BinaryIO, TextIO, Dict, List, Mapping, Any
 from timesketch_api_client import config  # type: ignore
 from timesketch_import_client import importer  # type: ignore
-
-# from timesketch_import_client import helper  # type: ignore
+from timesketch_import_client import helper  # type: ignore
 
 
 # hide ES log
@@ -601,22 +600,19 @@ class MansToEs:
         """
             to_timesketch: push dataframe to timesketch
         """
-        # TODO: find a mans with edx to test!
-        if self.exd_alerts:
-            with importer.ImportStreamer() as streamer:
-                streamer.set_sketch(self.sketch)
-                # streamer.set_config_helper(import_helper)
-                streamer.set_timeline_name(self.timeline_name)
-                for alert in self.exd_alerts:
-                    streamer.add_dict(alert)
+        import_helper = helper.ImportHelper()
 
         with importer.ImportStreamer() as streamer:
             streamer.set_sketch(self.sketch)
-            # streamer.set_config_helper(import_helper)
+            streamer.set_config_helper(import_helper)
             streamer.set_timeline_name(self.timeline_name)
             for file in glob(self.folder_path + "/tmp__*.json"):
                 df = pd.read_json(file, orient="records", lines=True,)
                 streamer.add_data_frame(df)
+            if self.exd_alerts:
+                for alert in self.exd_alerts:
+                    streamer.add_dict(alert)
+                    print("IOIOIO", alert)
         logging.debug("[MAIN] Bulk timesketch push [✔]")
 
     def run(self):

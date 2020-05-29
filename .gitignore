@@ -27,3 +27,5 @@ mans_to_es.log
 
 # Editor data
 .vscode/
+
+test.sh
