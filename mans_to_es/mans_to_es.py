@@ -607,12 +607,11 @@ class MansToEs:
             streamer.set_config_helper(import_helper)
             streamer.set_timeline_name(self.timeline_name)
             for file in glob(self.folder_path + "/tmp__*.json"):
-                df = pd.read_json(file, orient="records", lines=True,)
+                df = pd.read_json(file, orient="records", lines=True, dtype=False)
                 streamer.add_data_frame(df)
             if self.exd_alerts:
                 for alert in self.exd_alerts:
                     streamer.add_dict(alert)
-                    print("IOIOIO", alert)
         logging.debug("[MAIN] Bulk timesketch push [✔]")
 
     def run(self):
