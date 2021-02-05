@@ -3,7 +3,7 @@ elasticsearch>=7.5.1
 numpy>=1.16.6
 pandas>=0.24.2
 python-dateutil==2.8.1
-pytz==2020.1
+pytz==2021.1
 six==1.12.0
 urllib3==1.25.9
 xmltodict==0.12.0
