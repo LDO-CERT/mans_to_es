@@ -51,6 +51,7 @@ optional arguments:
   --version             show program's version number and exit
 
 
+## TIMESKETCH
 >>> mans_to_es.py timesketch --help
 usage: MANS to ES timesketch [-h] [--sketch_id SKETCH_ID] [--sketch_name SKETCH_NAME] [--sketch_description SKETCH_DESCRIPTION] [--timeline_name TIMELINE_NAME]
 
@@ -66,6 +67,12 @@ optional arguments:
                         TimeSketch Timeline Name
 
 
+#### EXAMPLES
+>>> mans_to_es.py --filename timeline.mans timesketch --sketch_name all_in --timeline_name timeline_001
+>>> mans_to_es.py --filename timeline.mans timesketch --sketch_id 1
+
+
+## ELASTIC
 >>> mans_to_es.py elastic --help
 usage: MANS to ES elastic [-h] [--index INDEX] [--es_host ES_HOST] [--es_port ES_PORT]
 
@@ -74,6 +81,10 @@ optional arguments:
   --index INDEX      ElasticSearch Index name
   --es_host ES_HOST  ElasticSearch host
   --es_port ES_PORT  ElasticSearch port
+
+
+#### EXAMPLES
+>>> mans_to_es.py --filename timeline.mans elastic --index all_in --es_host localhost --es_port 9200
 ```
 
 #### Usage as lib

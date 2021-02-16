@@ -3,7 +3,6 @@ import os, sys
 import argparse
 import collections
 import json
-import time
 import logging
 
 import zipfile
@@ -11,14 +10,13 @@ import shutil
 
 import datetime
 import ciso8601  # type: ignore
-import elasticsearch  # type: ignore
 import xmltodict  # type: ignore
 import pandas as pd  # type: ignore
 
 from glob import glob
 from billiard import Pool, cpu_count  # type: ignore
 from elasticsearch import helpers, Elasticsearch  # type: ignore
-from typing import Tuple, Union, BinaryIO, TextIO, Dict, List, Mapping, Any
+from typing import Tuple, Union, TextIO, Dict, List, Mapping, Any
 from timesketch_api_client import config  # type: ignore
 from timesketch_import_client import importer  # type: ignore
 from timesketch_import_client import helper  # type: ignore
@@ -176,6 +174,11 @@ def convert_both_pandas(argument: str, offset=0) -> pd.Series:
     try:
         d = ciso8601.parse_datetime(argument)
         d += datetime.timedelta(seconds=offset)
+        if d.year < 1700:
+            logging.warning(
+                f"[MAIN - WARNING] date {str(argument)} will fail in timesketch import - SKIPPING "
+            )
+            return pd.Series([None, None])
         return pd.Series(
             [d.isoformat(timespec="seconds"), str(int(d.timestamp() * 1000000))]
         )
@@ -575,9 +578,7 @@ class MansToEs:
         es = Elasticsearch([self.es_info])
 
         if len(self.exd_alerts) > 0:
-            helpers.bulk(
-                es, self.exd_alerts, index=self.index, doc_type="generic_event"
-            )
+            helpers.bulk(es, self.exd_alerts, index=self.index)
 
         elk_items = []
         for file in glob(self.folder_path + "/tmp__*.json"):
@@ -588,7 +589,6 @@ class MansToEs:
                 es,
                 elk_items,
                 index=self.index,
-                doc_type="generic_event",
                 chunk_size=self.bulk_size,
                 request_timeout=60,
             ),
@@ -608,7 +608,7 @@ class MansToEs:
             streamer.set_timeline_name(self.timeline_name)
             for file in glob(self.folder_path + "/tmp__*.json"):
                 df = pd.read_json(file, orient="records", lines=True, dtype=False)
-                streamer.add_data_frame(df)
+                streamer.add_data_frame(df, part_of_iter=True)
             if self.exd_alerts:
                 for alert in self.exd_alerts:
                     streamer.add_dict(alert)
