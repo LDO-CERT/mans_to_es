@@ -2,43 +2,33 @@
 import setuptools
 import os
 import pip
-
-pip_major_version = int(pip.__version__.split(".")[0])
-pip_minor_version = int(pip.__version__.split(".")[1])
-if pip_major_version >= 20:  # for pip >= 20
-    from pip._internal.req import parse_requirements
-    from pip._internal.network.session import PipSession
-elif pip_major_version >= 10:
-    from pip._internal.download import PipSession
-    from pip._internal.req import parse_requirements
-else:  # for pip <= 9.0.3
-    from pip.download import PipSession
-    from pip.req import parse_requirements
+import pkg_resources
 
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-if (pip_major_version == 20 and pip_minor_version >= 1) or pip_major_version > 20:
-    install_requires = [
-        str(req.requirement)
-        for req in parse_requirements("requirements.txt", session=PipSession(),)
-    ]
-else:
-    try:
-        install_requires = [
-            str(req.req)
-            for req in parse_requirements("requirements.txt", session=PipSession(),)
-        ]
-    except:
-        install_requires = [
-            str(req)
-            for req in parse_requirements("requirements.txt", session=PipSession(),)
-        ]
+
+def parse_requirements_from_file(path):
+    """Parses requirements from a requirements file.
+    Args:
+      path (str): path to the requirements file.
+    Yields:
+      pkg_resources.Requirement: package resource requirement.
+    """
+    with open(path, "r") as file_object:
+        file_contents = file_object.read()
+    for req in pkg_resources.parse_requirements(file_contents):
+        try:
+            requirement = str(req.req)
+        except AttributeError:
+            requirement = str(req)
+        yield requirement
+
 
 setuptools.setup(
     name="mans_to_es",
-    version="1.6",
+    version="1.7",
     author="LDO-CERT",
     author_email="gcert@leonardocompany.com",
     description="Send .mans to ElasticSearch",
@@ -52,5 +42,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     entry_points={"console_scripts": ["mans_to_es=mans_to_es.mans_to_es:main"]},
-    install_requires=install_requires,
+    install_requires=parse_requirements_from_file("requirements.txt"),
 )

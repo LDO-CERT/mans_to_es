@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7]
+- Use timesketch api to upload to timesketch
+- Put run function in try/catch and not main
+- Fix setup.py
+- Fix packaging [@joachimmetz]
+
 ## [1.6] 2020-05-20
 - Use biliard to avoid "daemonic processes are not allowed to have children" in celery
 - Restore doc_type="generic_event" used by timesketch even if it'll be deprecated in elastic 8
@@ -13,7 +19,7 @@
 ## [1.4] 2019-10-03
 - Support for extracting multiple field as comment
 - Keep all meta by default
-- Check if elastic is up @deralexxx
+- Check if elastic is up [@deralexxx]
 
 ## [1.3] 2019-07-29
 - Added process-api to processed items
