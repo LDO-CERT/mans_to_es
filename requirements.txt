@@ -1,6 +1,6 @@
 certifi==2020.12.5
 elasticsearch==7.10.1
-numpy==1.20.0
+numpy==1.20.1
 pandas==1.2.1
 python-dateutil==2.8.1
 pytz==2021.1
