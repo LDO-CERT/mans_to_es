@@ -564,7 +564,7 @@ class MansToEs:
             df.loc[:, "timestamp_desc"] = df.loc[:, "message"]
             logging.debug(f"[{filetype:<20} {file}] df [✔] - date [✔] - message [✔]")
             df.dropna(axis=1, how="all").to_json(
-                os.path.join(self.folder_path, f"tmp___{file}.json"),
+                os.path.join(self.folder_path, f"tmp___{filetype}.json"),
                 orient="records",
                 lines=True,
             )
@@ -604,13 +604,17 @@ class MansToEs:
 
         with importer.ImportStreamer() as streamer:
             streamer.set_sketch(self.sketch)
+            streamer.set_provider("MansToEs")
             streamer.set_config_helper(import_helper)
             streamer.set_timeline_name(self.timeline_name)
             for file in glob(self.folder_path + "/tmp__*.json"):
                 df = pd.read_json(file, orient="records", lines=True, dtype=False)
+                filetype = file.split("tmp___")[-1].split(".")[0].split("_")[0]
+                streamer.set_upload_context(filetype)
                 streamer.add_data_frame(df, part_of_iter=True)
             if self.exd_alerts:
                 for alert in self.exd_alerts:
+                    streamer.set_upload_context("EXD alerts")
                     streamer.add_dict(alert)
         logging.debug("[MAIN] Bulk timesketch push [✔]")
 
