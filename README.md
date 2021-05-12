@@ -1,34 +1,43 @@
 # mans_to_es
 [![Version](https://img.shields.io/pypi/v/mans_to_es.svg)](https://pypi.python.org/pypi/mans_to_es)
 [![GitHub license](https://img.shields.io/github/license/ldo-cert/mans_to_es.svg)](https://github.com/LDO-CERT/mans_to_es)
-[![HitCount](http://hits.dwyl.com/LDO-CERT/mans_to_es.svg)](http://hits.dwyl.com/LDO-CERT/mans_to_es)
+<!-- [![HitCount](http://hits.dwyl.com/LDO-CERT/mans_to_es.svg)](http://hits.dwyl.com/LDO-CERT/mans_to_es) -->
 
 Parses the FireEye HX .mans triage collections and send them to ElasticSearch
 
 ## Table of Contents
-1. [About](#about)
-2. [Getting started](#getting-started)
-3. [Contributing](#contributing)
-4. [Disclaimer](#disclaimer)
-
+- [mans_to_es](#mans_to_es)
+  - [Table of Contents](#table-of-contents)
+  - [About](#about)
+  - [Getting started](#getting-started)
+    - [Installation](#installation)
+    - [Develop](#develop)
+  - [Usage as script](#usage-as-script)
+    - [TIMESKETCH](#timesketch)
+      - [EXAMPLES](#examples)
+      - [FIRST RUN](#first-run)
+    - [ELASTIC](#elastic)
+      - [EXAMPLES](#examples-1)
+  - [Usage as lib](#usage-as-lib)
+  - [Contributing](#contributing)
+  - [Disclaimer](#disclaimer)
 
 ## About
-mans_to_es is an open source tool for parsing FireEye HX .mans triage collections and send them to ElasticSearch.
-
-Mans file is a zipped collection of xml that we parse using [xmltodict](https://github.com/martinblech/xmltodict).
+mans_to_es is an open source tool for parsing FireEye HX .mans triage collections and send them to ElasticSearch.<br>
+Mans file is a zipped collection of xml that we parse using [xmltodict](https://github.com/martinblech/xmltodict).<br>
 It uses pandas and multiprocessing to speed up the parsing with xml files.
 
 ## Getting started
-#### Installation
+### Installation
 ```
 pip install mans-to-es
 ```
 
-#### Developing
+### Develop
 
-If you want to develop with the script you can download and place it under /usr/local/bin and make it executable.
+You can clone this repo or download directly the mans_to_es.py script, place it under /usr/local/bin and make it executable.
 
-#### Usage as script
+## Usage as script
 
 ```
 >>> mans_to_es.py --help
@@ -49,9 +58,10 @@ optional arguments:
   --bulk_size BULK_SIZE
                         Bulk size for multiprocessing parsing and upload
   --version             show program's version number and exit
+```
 
-
-## TIMESKETCH
+### TIMESKETCH
+```
 >>> mans_to_es.py timesketch --help
 usage: MANS to ES timesketch [-h] [--sketch_id SKETCH_ID] [--sketch_name SKETCH_NAME] [--sketch_description SKETCH_DESCRIPTION] [--timeline_name TIMELINE_NAME]
 
@@ -65,14 +75,28 @@ optional arguments:
                         TimeSketch Sketch description
   --timeline_name TIMELINE_NAME
                         TimeSketch Timeline Name
-
+```
 
 #### EXAMPLES
->>> mans_to_es.py --filename timeline.mans timesketch --sketch_name all_in --timeline_name timeline_001
->>> mans_to_es.py --filename timeline.mans timesketch --sketch_id 1
+```
+>>> mans_to_es.py --filename test_file.mans timesketch --sketch_name test_file --timeline_name test_file
+>>> mans_to_es.py --filename test_file.mans timesketch --sketch_id 1
+```
 
+#### FIRST RUN
+During the first run the script will ask some information to connect to your timesketch instance.<br>
+A configuration files is created in your home directory for subsequent runs.
 
-## ELASTIC
+```
+>>> mans_to_es.py --filename file.mans test_file --sketch_name test_file --timeline_name test_file
+What is the value for <host_uri> (URL of the Timesketch server): http://localhost:5000
+What is the value for <auth_mode> (Authentication mode, valid choices are: "userpass" (user/pass) or "oauth"): userpass
+What is the value for <username> (The username of the Timesketch user): dev
+Password for user dev [**] 
+```
+
+### ELASTIC
+```
 >>> mans_to_es.py elastic --help
 usage: MANS to ES elastic [-h] [--index INDEX] [--es_host ES_HOST] [--es_port ES_PORT]
 
@@ -81,14 +105,14 @@ optional arguments:
   --index INDEX      ElasticSearch Index name
   --es_host ES_HOST  ElasticSearch host
   --es_port ES_PORT  ElasticSearch port
-
+```
 
 #### EXAMPLES
+```
 >>> mans_to_es.py --filename timeline.mans elastic --index all_in --es_host localhost --es_port 9200
 ```
 
-#### Usage as lib
-
+## Usage as lib
 ```
 >>> from mans_to_es import MansToEs
 >>>
