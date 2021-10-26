@@ -165,11 +165,11 @@ MANS_FIELDS: Dict[str, Any] = {
 
 def convert_both_pandas(argument: str, offset=0) -> pd.Series:
     """
-        convert_both_pandas: parse date field and convert to it to proper
-        in:
-            argument: object to parse
-        out:
-            parsed data
+    convert_both_pandas: parse date field and convert to it to proper
+    in:
+        argument: object to parse
+    out:
+        parsed data
     """
     try:
         d = ciso8601.parse_datetime(argument)
@@ -189,11 +189,11 @@ def convert_both_pandas(argument: str, offset=0) -> pd.Series:
 
 def convert_both(argument: str, offset=0) -> Union[Tuple[str, str], Tuple[None, None]]:
     """
-        convert_both: parse date field and convert to it to proper
-        in:
-            argument: object to parse
-        out:
-            parsed data
+    convert_both: parse date field and convert to it to proper
+    in:
+        argument: object to parse
+    out:
+        parsed data
     """
     try:
         d = ciso8601.parse_datetime(argument)
@@ -206,11 +206,11 @@ def convert_both(argument: str, offset=0) -> Union[Tuple[str, str], Tuple[None, 
 
 def convert_skew(offset: str) -> int:
     """
-        convert_skew: return offset for xml file in seconds
-        in:
-            offset: skew offset in custom format
-        out:
-            offset in secs or 0 if error
+    convert_skew: return offset for xml file in seconds
+    in:
+        offset: skew offset in custom format
+    out:
+        offset in secs or 0 if error
     """
     try:
         return int(offset.replace("PT", "").replace("S", ""))
@@ -266,10 +266,10 @@ class MansToEs:
 
     def handle_stateagentinspector(self, path, item_detail) -> bool:
         """
-            handle_item: streaming function for xmltodict (stateagentitem)
-            In:
-                path: xml item path
-                item_detail: xml item data
+        handle_item: streaming function for xmltodict (stateagentitem)
+        In:
+            path: xml item path
+            item_detail: xml item data
         """
         item = {}
         uid = path[1][1]["uid"]
@@ -305,10 +305,10 @@ class MansToEs:
 
     def handle_item(self, path, item_detail) -> bool:
         """
-            handle_item: streaming function for xmltodict
-            In:
-                path: xml item path
-                item_detail: xml item data
+        handle_item: streaming function for xmltodict
+        In:
+            path: xml item path
+            item_detail: xml item data
         """
         item_detail["message"] = path[1][0]
         self.generic_items.setdefault(path[1][0], []).append(item_detail)
@@ -322,7 +322,7 @@ class MansToEs:
         stateagentinspector: bool = False,
     ) -> Tuple[pd.DataFrame, bool]:
         """
-            Generate dataframe from xml file
+        Generate dataframe from xml file
         """
         xmltodict.parse(
             file.read(),
@@ -340,7 +340,7 @@ class MansToEs:
 
     def extract_mans(self):
         """
-            Unzip .mans file
+        Unzip .mans file
         """
         zip_ref = zipfile.ZipFile(self.filename, "r")
         zip_ref.extractall(self.folder_path)
@@ -349,7 +349,7 @@ class MansToEs:
 
     def delete_temp_folder(self):
         """
-            Delete temporary folder
+        Delete temporary folder
         """
         try:
             shutil.rmtree(self.folder_path)
@@ -359,7 +359,7 @@ class MansToEs:
 
     def parse_manifest(self):
         """
-            Obtains filenames from manifest.json file in extracted folder
+        Obtains filenames from manifest.json file in extracted folder
         """
         with open(os.path.join(self.folder_path, "manifest.json"), "r") as f:
             data = json.load(f)
@@ -379,7 +379,7 @@ class MansToEs:
 
     def parse_hits(self):
         """
-            Get hit and alert from hits.json file, threat info from threats.json
+        Get hit and alert from hits.json file, threat info from threats.json
         """
         threats_info = {}
         if not os.path.exists(os.path.join(self.folder_path, "threats.json")):
@@ -428,7 +428,7 @@ class MansToEs:
 
     def process(self):
         """
-            Process all files contained in .mans extracted folder
+        Process all files contained in .mans extracted folder
         """
         files_list = []
         for filetype in self.filelist.keys():
@@ -453,11 +453,11 @@ class MansToEs:
 
     def process_file(self, filetype: str, file: str, offset: int):
         """
-            process_file: parse xml to df and clean it
-            In:
-                filetype: filetype of the xml
-                file: xml file pointer 
-                offset: offset to add to date fields
+        process_file: parse xml to df and clean it
+        In:
+            filetype: filetype of the xml
+            file: xml file pointer
+            offset: offset to add to date fields
         """
         info = MANS_FIELDS[filetype]
 
@@ -573,7 +573,7 @@ class MansToEs:
 
     def to_elastic(self):
         """
-            to_elastic: push dataframe to elastic index
+        to_elastic: push dataframe to elastic index
         """
         es = Elasticsearch([self.es_info])
 
@@ -598,7 +598,7 @@ class MansToEs:
 
     def to_timesketch(self):
         """
-            to_timesketch: push dataframe to timesketch
+        to_timesketch: push dataframe to timesketch
         """
         import_helper = helper.ImportHelper()
 
@@ -620,7 +620,7 @@ class MansToEs:
 
     def run(self):
         """
-            Main process
+        Main process
         """
         try:
             self.extract_mans()
@@ -670,7 +670,8 @@ def main():
     elastic.add_argument("--es_host", dest="es_host", help="ElasticSearch host")
     elastic.add_argument("--es_port", dest="es_port", help="ElasticSearch port")
 
-    sp = parser.add_subparsers(required=True, dest="mode")
+    sp = parser.add_subparsers(dest="mode")
+    sp.required = True
     sp_elastic = sp.add_parser(
         "elastic", parents=[elastic], help="Save data in elastic"
     )

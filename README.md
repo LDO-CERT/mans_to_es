@@ -10,7 +10,6 @@ Parses the FireEye HX .mans triage collections and send them to ElasticSearch
   - [Table of Contents](#table-of-contents)
   - [About](#about)
   - [Getting started](#getting-started)
-    - [Installation](#installation)
     - [Develop](#develop)
   - [Usage as script](#usage-as-script)
     - [TIMESKETCH](#timesketch)
@@ -28,14 +27,14 @@ Mans file is a zipped collection of xml that we parse using [xmltodict](https://
 It uses pandas and multiprocessing to speed up the parsing with xml files.
 
 ## Getting started
-### Installation
-```
-pip install mans-to-es
-```
-
 ### Develop
 
 You can clone this repo or download directly the mans_to_es.py script, place it under /usr/local/bin and make it executable.
+
+To install required libs:
+```
+>>> pip install -r requirements.txt
+```
 
 ## Usage as script
 
@@ -88,7 +87,7 @@ During the first run the script will ask some information to connect to your tim
 A configuration files is created in your home directory for subsequent runs.
 
 ```
->>> mans_to_es.py --filename file.mans test_file --sketch_name test_file --timeline_name test_file
+>>> mans_to_es.py --filename file.mans timesketch --sketch_name test_file --timeline_name test_file
 What is the value for <host_uri> (URL of the Timesketch server): http://localhost:5000
 What is the value for <auth_mode> (Authentication mode, valid choices are: "userpass" (user/pass) or "oauth"): userpass
 What is the value for <username> (The username of the Timesketch user): dev
