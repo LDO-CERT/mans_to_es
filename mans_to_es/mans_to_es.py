@@ -676,7 +676,8 @@ def main():
     elastic.add_argument("--es_host", dest="es_host", help="ElasticSearch host")
     elastic.add_argument("--es_port", dest="es_port", help="ElasticSearch port")
 
-    sp = parser.add_subparsers(required=True, dest="mode")
+    sp = parser.add_subparsers(dest="mode")
+    sp.required = True
     sp_elastic = sp.add_parser(
         "elastic", parents=[elastic], help="Save data in elastic"
     )
