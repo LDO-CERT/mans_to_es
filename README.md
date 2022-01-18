@@ -30,6 +30,7 @@ It uses pandas and multiprocessing to speed up the parsing with xml files.
 ### Develop
 
 You can clone this repo or download directly the mans_to_es.py script, place it under /usr/local/bin and make it executable.
+Minimal version of python supported is 3.7.
 
 To install required libs:
 ```
